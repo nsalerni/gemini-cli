@@ -89,7 +89,7 @@ describe('clearCommand', () => {
     await clearCommand.action(nullConfigContext, '');
 
     expect(nullConfigContext.ui.setDebugMessage).toHaveBeenCalledWith(
-      'Clearing terminal and resetting chat.',
+      'Clearing terminal.',
     );
     expect(mockResetChat).not.toHaveBeenCalled();
     expect(uiTelemetryService.resetLastPromptTokenCount).toHaveBeenCalledTimes(
