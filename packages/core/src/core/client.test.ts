@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import {
@@ -429,6 +427,7 @@ describe('Gemini Client (client.ts)', () => {
         addHistory: vi.fn(),
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       client['chat'] = mockChat as any;
 
       const newContent = {

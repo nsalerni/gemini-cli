@@ -5,7 +5,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { retryWithBackoff } from './retry.js';
 import { setSimulate429 } from './testUtils.js';

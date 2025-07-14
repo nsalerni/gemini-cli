@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { memoryCommand } from './memoryCommand.js';
 import { type CommandContext, SlashCommand } from './types.js';
@@ -150,6 +148,7 @@ describe('memoryCommand', () => {
         services: {
           config: {
             refreshMemory: mockRefreshMemory,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
         },
       });

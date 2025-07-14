@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import {
   describe,
   it,
@@ -118,6 +116,7 @@ describe('useAutoAcceptIndicator', () => {
       capturedUseInputHandler = handler;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockConfigInstance = new (Config as any)() as MockConfigInstanceShape;
   });
 
