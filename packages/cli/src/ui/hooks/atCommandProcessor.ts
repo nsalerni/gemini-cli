@@ -136,6 +136,7 @@ export async function handleAtCommand({
 
   // Get centralized file discovery service
   const fileDiscovery = config.getFileService();
+  const fileWatching = config.getFileWatchingService();
   const respectGitIgnore = config.getFileFilteringRespectGitIgnore();
 
   const pathSpecsToRead: string[] = [];
@@ -208,9 +209,21 @@ export async function handleAtCommand({
       resolvedSuccessfully = true;
     } catch (error) {
       if (isNodeError(error) && error.code === 'ENOENT') {
-        if (config.getEnableRecursiveFileSearch() && globTool) {
+        // Try to resolve the file using the file watching service
+        onDebugMessage(
+          `Path ${pathName} not found directly, attempting file watching service resolution.`,
+        );
+        
+        const resolvedPath = fileWatching.resolveFileAfterRename(pathName, config.getTargetDir());
+        if (resolvedPath) {
+          currentPathSpec = path.relative(config.getTargetDir(), resolvedPath);
           onDebugMessage(
-            `Path ${pathName} not found directly, attempting glob search.`,
+            `File watching service resolved ${pathName} to ${currentPathSpec}`,
+          );
+          resolvedSuccessfully = true;
+        } else if (config.getEnableRecursiveFileSearch() && globTool) {
+          onDebugMessage(
+            `File watching service could not resolve ${pathName}, attempting glob search.`,
           );
           try {
             const globResult = await globTool.execute(
@@ -254,7 +267,7 @@ export async function handleAtCommand({
           }
         } else {
           onDebugMessage(
-            `Glob tool not found. Path ${pathName} will be skipped.`,
+            `File watching service could not resolve ${pathName} and glob search is disabled. Path ${pathName} will be skipped.`,
           );
         }
       } else {

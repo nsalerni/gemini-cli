@@ -31,6 +31,7 @@ import { WebSearchTool } from '../tools/web-search.js';
 import { GeminiClient } from '../core/client.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { GitService } from '../services/gitService.js';
+import { FileWatchingService, DefaultFileWatchingService } from '../services/fileWatchingService.js';
 import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
 import { getProjectTempDir } from '../utils/paths.js';
 import {
@@ -137,6 +138,7 @@ export interface ConfigParameters {
   proxy?: string;
   cwd: string;
   fileDiscoveryService?: FileDiscoveryService;
+  fileWatchingService?: FileWatchingService;
   bugCommand?: BugCommandSettings;
   model: string;
   extensionContextFilePaths?: string[];
@@ -176,6 +178,7 @@ export class Config {
     enableRecursiveFileSearch: boolean;
   };
   private fileDiscoveryService: FileDiscoveryService | null = null;
+  private fileWatchingService: FileWatchingService | null = null;
   private gitService: GitService | undefined = undefined;
   private readonly checkpointing: boolean;
   private readonly proxy: string | undefined;
@@ -229,6 +232,7 @@ export class Config {
     this.proxy = params.proxy;
     this.cwd = params.cwd ?? process.cwd();
     this.fileDiscoveryService = params.fileDiscoveryService ?? null;
+    this.fileWatchingService = params.fileWatchingService ?? null;
     this.bugCommand = params.bugCommand;
     this.model = params.model;
     this.extensionContextFilePaths = params.extensionContextFilePaths ?? [];
@@ -479,6 +483,13 @@ export class Config {
       this.fileDiscoveryService = new FileDiscoveryService(this.targetDir);
     }
     return this.fileDiscoveryService;
+  }
+
+  getFileWatchingService(): FileWatchingService {
+    if (!this.fileWatchingService) {
+      this.fileWatchingService = new DefaultFileWatchingService();
+    }
+    return this.fileWatchingService;
   }
 
   getUsageStatisticsEnabled(): boolean {
