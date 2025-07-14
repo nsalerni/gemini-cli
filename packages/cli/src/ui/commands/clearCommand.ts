@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { uiTelemetryService } from '@google/gemini-cli-core';
 import { SlashCommand } from './types.js';
 
 export const clearCommand: SlashCommand = {
@@ -12,6 +13,7 @@ export const clearCommand: SlashCommand = {
   action: async (context, _args) => {
     context.ui.setDebugMessage('Clearing terminal and resetting chat.');
     await context.services.config?.getGeminiClient()?.resetChat();
+    uiTelemetryService.resetLastPromptTokenCount();
     context.ui.clear();
   },
 };
