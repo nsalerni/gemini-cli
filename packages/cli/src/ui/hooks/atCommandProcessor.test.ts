@@ -15,11 +15,16 @@ import type { Stats } from 'fs';
 
 const mockGetToolRegistry = vi.fn();
 const mockGetTargetDir = vi.fn();
+const mockFileWatchingService = {
+  resolveFileAfterRename: vi.fn(),
+};
+
 const mockConfig = {
   getToolRegistry: mockGetToolRegistry,
   getTargetDir: mockGetTargetDir,
   isSandboxed: vi.fn(() => false),
   getFileService: vi.fn(),
+  getFileWatchingService: vi.fn(() => mockFileWatchingService),
   getFileFilteringRespectGitIgnore: vi.fn(() => true),
   getEnableRecursiveFileSearch: vi.fn(() => true),
 } as unknown as Config;
@@ -471,7 +476,7 @@ describe('handleAtCommand', () => {
     ]);
     expect(result.shouldProceed).toBe(true);
     expect(mockOnDebugMessage).toHaveBeenCalledWith(
-      `Path ${invalidFile} not found directly, attempting glob search.`,
+      `File watching service could not resolve ${invalidFile}, attempting glob search.`,
     );
     expect(mockOnDebugMessage).toHaveBeenCalledWith(
       `Glob search for '**/*${invalidFile}*' found no files or an error. Path ${invalidFile} will be skipped.`,
@@ -753,7 +758,7 @@ describe('handleAtCommand', () => {
 
       expect(mockGlobExecute).not.toHaveBeenCalled();
       expect(mockOnDebugMessage).toHaveBeenCalledWith(
-        `Glob tool not found. Path ${invalidFile} will be skipped.`,
+        `File watching service could not resolve ${invalidFile} and glob search is disabled. Path ${invalidFile} will be skipped.`,
       );
       expect(result.processedQuery).toEqual([{ text: query }]);
       expect(result.shouldProceed).toBe(true);

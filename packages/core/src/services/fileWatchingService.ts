@@ -15,7 +15,10 @@ export interface FileWatchingService {
    * @param workingDir The working directory to resolve relative paths
    * @returns The current file path if found, or null if not found
    */
-  resolveFileAfterRename(originalPath: string, workingDir: string): string | null;
+  resolveFileAfterRename(
+    originalPath: string,
+    workingDir: string,
+  ): string | null;
 
   /**
    * Checks if a file exists, and if not, tries to find a similar file
@@ -35,10 +38,13 @@ export class DefaultFileWatchingService implements FileWatchingService {
   private fileCache = new LruCache<string, string>(1000);
   private directoryCache = new LruCache<string, string[]>(100);
 
-  resolveFileAfterRename(originalPath: string, workingDir: string): string | null {
+  resolveFileAfterRename(
+    originalPath: string,
+    workingDir: string,
+  ): string | null {
     const absolutePath = path.resolve(workingDir, originalPath);
     const cacheKey = `resolve:${absolutePath}`;
-    
+
     // Check cache first
     const cached = this.fileCache.get(cacheKey);
     if (cached) {
@@ -85,7 +91,7 @@ export class DefaultFileWatchingService implements FileWatchingService {
     // Try case-insensitive match
     const lowerFileName = fileName.toLowerCase();
     const caseInsensitiveMatch = dirContents.find(
-      (file) => file.toLowerCase() === lowerFileName
+      (file) => file.toLowerCase() === lowerFileName,
     );
     if (caseInsensitiveMatch) {
       return path.join(dirPath, caseInsensitiveMatch);
@@ -94,10 +100,10 @@ export class DefaultFileWatchingService implements FileWatchingService {
     // Try fuzzy matching based on file extension and similar names
     const fileExt = path.extname(fileName);
     const baseName = path.basename(fileName, fileExt);
-    
+
     // Look for files with the same extension
     const sameExtFiles = dirContents.filter(
-      (file) => path.extname(file) === fileExt
+      (file) => path.extname(file) === fileExt,
     );
 
     // Find the best match based on similarity
@@ -107,8 +113,9 @@ export class DefaultFileWatchingService implements FileWatchingService {
     for (const file of sameExtFiles) {
       const candidateBaseName = path.basename(file, fileExt);
       const score = this.calculateSimilarity(baseName, candidateBaseName);
-      
-      if (score > bestScore && score > 0.6) { // Threshold for similarity
+
+      if (score > bestScore && score > 0.6) {
+        // Threshold for similarity
         bestScore = score;
         bestMatch = file;
       }
@@ -123,9 +130,9 @@ export class DefaultFileWatchingService implements FileWatchingService {
 
   private getDirectoryContents(dirPath: string): string[] | null {
     const cacheKey = `dir:${dirPath}`;
-    
+
     // Check cache first
-    let cached = this.directoryCache.get(cacheKey);
+    const cached = this.directoryCache.get(cacheKey);
     if (cached) {
       return cached;
     }
@@ -141,7 +148,7 @@ export class DefaultFileWatchingService implements FileWatchingService {
           return false;
         }
       });
-      
+
       this.directoryCache.set(cacheKey, files);
       return files;
     } catch {
@@ -151,7 +158,10 @@ export class DefaultFileWatchingService implements FileWatchingService {
 
   private calculateSimilarity(str1: string, str2: string): number {
     // Simple Levenshtein distance based similarity
-    const distance = this.levenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
+    const distance = this.levenshteinDistance(
+      str1.toLowerCase(),
+      str2.toLowerCase(),
+    );
     const maxLen = Math.max(str1.length, str2.length);
     return maxLen === 0 ? 1 : (maxLen - distance) / maxLen;
   }
@@ -175,7 +185,7 @@ export class DefaultFileWatchingService implements FileWatchingService {
           matrix[i][j] = Math.min(
             matrix[i - 1][j - 1] + 1,
             matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
+            matrix[i - 1][j] + 1,
           );
         }
       }

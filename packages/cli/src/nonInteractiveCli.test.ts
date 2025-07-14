@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { runNonInteractive } from './nonInteractiveCli.js';
 import { Config, GeminiClient, ToolRegistry } from '@google/gemini-cli-core';

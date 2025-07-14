@@ -31,7 +31,10 @@ import { WebSearchTool } from '../tools/web-search.js';
 import { GeminiClient } from '../core/client.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { GitService } from '../services/gitService.js';
-import { FileWatchingService, DefaultFileWatchingService } from '../services/fileWatchingService.js';
+import {
+  FileWatchingService,
+  DefaultFileWatchingService,
+} from '../services/fileWatchingService.js';
 import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
 import { getProjectTempDir } from '../utils/paths.js';
 import {

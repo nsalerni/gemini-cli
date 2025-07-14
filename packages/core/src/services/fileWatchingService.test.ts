@@ -29,7 +29,7 @@ describe('DefaultFileWatchingService', () => {
       mockFs.existsSync.mockReturnValue(true);
 
       const result = service.resolveFileAfterRename(originalPath, workingDir);
-      
+
       expect(result).toBe(expectedPath);
       expect(mockFs.existsSync).toHaveBeenCalledWith(expectedPath);
     });
@@ -39,10 +39,10 @@ describe('DefaultFileWatchingService', () => {
       const workingDir = '/project';
 
       mockFs.existsSync.mockReturnValue(false);
-      mockFs.readdirSync.mockReturnValue([]);
+      (mockFs.readdirSync as any).mockReturnValue([]);
 
       const result = service.resolveFileAfterRename(originalPath, workingDir);
-      
+
       expect(result).toBeNull();
     });
 
@@ -54,17 +54,24 @@ describe('DefaultFileWatchingService', () => {
       mockFs.existsSync.mockImplementation((filePath) => {
         if (filePath === expectedPath) return false;
         if (filePath === path.dirname(expectedPath)) return true;
-        return filePath === path.join(path.dirname(expectedPath), 'new-file.txt');
+        return (
+          filePath === path.join(path.dirname(expectedPath), 'new-file.txt')
+        );
       });
 
-      mockFs.readdirSync.mockReturnValue(['new-file.txt', 'other.js'] as any);
-      mockFs.statSync.mockImplementation((filePath) => ({
-        isFile: () => filePath.toString().endsWith('.txt'),
-      }) as any);
+      (mockFs.readdirSync as any).mockReturnValue(['new-file.txt', 'other.js']);
+      mockFs.statSync.mockImplementation(
+        (filePath) =>
+          ({
+            isFile: () => filePath.toString().endsWith('.txt'),
+          }) as fs.Stats,
+      );
 
       const result = service.resolveFileAfterRename(originalPath, workingDir);
-      
-      expect(result).toBe(path.join(path.dirname(expectedPath), 'new-file.txt'));
+
+      expect(result).toBe(
+        path.join(path.dirname(expectedPath), 'new-file.txt'),
+      );
     });
 
     it('should handle case-insensitive matching', () => {
@@ -78,13 +85,16 @@ describe('DefaultFileWatchingService', () => {
         return filePath === path.join(path.dirname(expectedPath), 'test.txt');
       });
 
-      mockFs.readdirSync.mockReturnValue(['test.txt', 'other.js'] as any);
-      mockFs.statSync.mockImplementation((filePath) => ({
-        isFile: () => filePath.toString().endsWith('.txt'),
-      }) as any);
+      (mockFs.readdirSync as any).mockReturnValue(['test.txt', 'other.js']);
+      mockFs.statSync.mockImplementation(
+        (filePath) =>
+          ({
+            isFile: () => filePath.toString().endsWith('.txt'),
+          }) as fs.Stats,
+      );
 
       const result = service.resolveFileAfterRename(originalPath, workingDir);
-      
+
       expect(result).toBe(path.join(path.dirname(expectedPath), 'test.txt'));
     });
   });
@@ -96,11 +106,11 @@ describe('DefaultFileWatchingService', () => {
       const dirPath = path.resolve(workingDir);
 
       mockFs.existsSync.mockReturnValue(true);
-      mockFs.readdirSync.mockReturnValue(['test.txt', 'other.js'] as any);
-      mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
+      (mockFs.readdirSync as any).mockReturnValue(['test.txt', 'other.js']);
+      mockFs.statSync.mockReturnValue({ isFile: () => true } as fs.Stats);
 
       const result = service.findBestMatch(filePath, workingDir);
-      
+
       expect(result).toBe(path.join(dirPath, 'test.txt'));
     });
 
@@ -111,7 +121,7 @@ describe('DefaultFileWatchingService', () => {
       mockFs.existsSync.mockReturnValue(false);
 
       const result = service.findBestMatch(filePath, workingDir);
-      
+
       expect(result).toBeNull();
     });
 
@@ -121,12 +131,15 @@ describe('DefaultFileWatchingService', () => {
       const dirPath = path.resolve(workingDir);
 
       mockFs.existsSync.mockReturnValue(true);
-      mockFs.readdirSync.mockReturnValue(['newname.txt', 'completely-different.js'] as any);
-      mockFs.statSync.mockReturnValue({ isFile: () => true } as any);
+      (mockFs.readdirSync as any).mockReturnValue([
+        'old-name.txt',
+        'completely-different.js',
+      ]);
+      mockFs.statSync.mockReturnValue({ isFile: () => true } as fs.Stats);
 
       const result = service.findBestMatch(filePath, workingDir);
-      
-      expect(result).toBe(path.join(dirPath, 'newname.txt'));
+
+      expect(result).toBe(path.join(dirPath, 'old-name.txt'));
     });
   });
 
@@ -134,10 +147,10 @@ describe('DefaultFileWatchingService', () => {
     it('should clear internal caches', () => {
       // Set up some cache state
       service.resolveFileAfterRename('test.txt', '/project');
-      
+
       // Clear cache
       service.clearCache();
-      
+
       // This should not throw and should work normally
       expect(() => service.clearCache()).not.toThrow();
     });

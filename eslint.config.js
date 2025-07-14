@@ -213,6 +213,13 @@ export default tseslint.config(
       ],
     },
   },
+  // Test files can use no-explicit-any for mocking
+  {
+    files: ['packages/**/*.test.ts', 'packages/**/*.test.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
   // Custom eslint rules for this repo
   {
     files: ['packages/**/*.{js,jsx,ts,tsx}'],

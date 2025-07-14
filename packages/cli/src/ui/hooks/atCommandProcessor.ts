@@ -213,8 +213,11 @@ export async function handleAtCommand({
         onDebugMessage(
           `Path ${pathName} not found directly, attempting file watching service resolution.`,
         );
-        
-        const resolvedPath = fileWatching.resolveFileAfterRename(pathName, config.getTargetDir());
+
+        const resolvedPath = fileWatching.resolveFileAfterRename(
+          pathName,
+          config.getTargetDir(),
+        );
         if (resolvedPath) {
           currentPathSpec = path.relative(config.getTargetDir(), resolvedPath);
           onDebugMessage(

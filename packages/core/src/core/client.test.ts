@@ -426,7 +426,7 @@ describe('Gemini Client (client.ts)', () => {
       const mockChat = {
         addHistory: vi.fn(),
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       client['chat'] = mockChat as any;
 
       const newContent = {

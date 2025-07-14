@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useGeminiStream, mergePartListUnions } from './useGeminiStream.js';
