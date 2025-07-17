@@ -274,6 +274,26 @@ export async function loadCliConfig(
   let mcpServers = mergeMcpServers(settings, activeExtensions);
   const excludeTools = mergeExcludeTools(settings, activeExtensions);
 
+  if (!argv.allowedMcpServerNames) {
+    if (settings.allowMCPServers) {
+      const allowedNames = new Set(settings.allowMCPServers.filter(Boolean));
+      if (allowedNames.size > 0) {
+        mcpServers = Object.fromEntries(
+          Object.entries(mcpServers).filter(([key]) => allowedNames.has(key)),
+        );
+      }
+    }
+
+    if (settings.excludeMCPServers) {
+      const excludedNames = new Set(settings.excludeMCPServers.filter(Boolean));
+      if (excludedNames.size > 0) {
+        mcpServers = Object.fromEntries(
+          Object.entries(mcpServers).filter(([key]) => !excludedNames.has(key)),
+        );
+      }
+    }
+  }
+
   if (argv.allowedMcpServerNames) {
     const allowedNames = new Set(argv.allowedMcpServerNames.filter(Boolean));
     if (allowedNames.size > 0) {
@@ -286,13 +306,25 @@ export async function loadCliConfig(
   }
 
   if (ideMode) {
+    if (mcpServers[IDE_SERVER_NAME]) {
+      logger.warn(
+        `Ignoring user-defined MCP server config for "${IDE_SERVER_NAME}" as it is a reserved name.`,
+      );
+    }
+    const companionPort = process.env.GEMINI_CLI_IDE_SERVER_PORT;
+    if (!companionPort) {
+      throw new Error(
+        'Could not connect to IDE. Make sure you have the companion VS Code extension installed from the marketplace or via /ide install.',
+      );
+    }
+    const httpUrl = `http://localhost:${companionPort}/mcp`;
     mcpServers[IDE_SERVER_NAME] = new MCPServerConfig(
       undefined, // command
       undefined, // args
       undefined, // env
       undefined, // cwd
       undefined, // url
-      'http://localhost:3000/mcp', // httpUrl
+      httpUrl, // httpUrl
       undefined, // headers
       undefined, // tcp
       undefined, // timeout
