@@ -127,7 +127,7 @@ jobs:
           name: coverage-reports-${{ matrix.node-version }}
           path: packages/*/coverage
 
-  test-mac:
+  test-macos:
     name: Test (macOS)
     runs-on: macos-latest
     needs: lint-macos
