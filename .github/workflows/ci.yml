@@ -161,7 +161,7 @@ jobs:
         if: always() && (github.event.pull_request.head.repo.full_name == github.repository)
         uses: dorny/test-reporter@dc3a92680fcc15842eef52e8c4606ea7ce6bd3f3 # v2
         with:
-          name: Test Results (Node ${{ matrix.node-version }})
+          name: Test Results (macos Node ${{ matrix.node-version }})
           path: packages/*/junit.xml
           reporter: java-junit
           fail-on-error: 'false'
@@ -170,14 +170,14 @@ jobs:
         if: always() && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: test-results-fork-${{ matrix.node-version }}
+          name: test-results-macos-fork-${{ matrix.node-version }}
           path: packages/*/junit.xml
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: coverage-reports-${{ matrix.node-version }}
+          name: coverage-reports-macos-${{ matrix.node-version }}
           path: packages/*/coverage
 
   post_coverage_comment:
