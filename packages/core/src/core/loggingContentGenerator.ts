@@ -150,14 +150,12 @@ export class LoggingContentGenerator implements ContentGenerator {
     startTime: number,
     userPromptId: string,
   ): AsyncGenerator<GenerateContentResponse> {
-    let lastResponse: GenerateContentResponse | undefined;
     const responses: GenerateContentResponse[] = [];
 
     let lastUsageMetadata: GenerateContentResponseUsageMetadata | undefined;
     try {
       for await (const response of stream) {
         responses.push(response);
-        lastResponse = response;
         if (response.usageMetadata) {
           lastUsageMetadata = response.usageMetadata;
         }
