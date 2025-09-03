@@ -40,7 +40,7 @@ export class LoggingContentGenerator implements ContentGenerator {
   constructor(
     private readonly wrapped: ContentGenerator,
     private readonly config: Config,
-  ) { }
+  ) {}
 
   getWrapped(): ContentGenerator {
     return this.wrapped;
