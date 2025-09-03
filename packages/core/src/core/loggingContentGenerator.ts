@@ -40,7 +40,7 @@ export class LoggingContentGenerator implements ContentGenerator {
   constructor(
     private readonly wrapped: ContentGenerator,
     private readonly config: Config,
-  ) {}
+  ) { }
 
   getWrapped(): ContentGenerator {
     return this.wrapped;
@@ -173,7 +173,12 @@ export class LoggingContentGenerator implements ContentGenerator {
       );
     } catch (error) {
       const durationMs = Date.now() - startTime;
-      this._logApiError(durationMs, error, userPromptId);
+      this._logApiError(
+        durationMs,
+        error,
+        responses[0]?.modelVersion || '',
+        userPromptId,
+      );
       throw error;
     }
   }
