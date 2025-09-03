@@ -163,14 +163,12 @@ export class LoggingContentGenerator implements ContentGenerator {
       }
       // Only log successful API response if no error occurred
       const durationMs = Date.now() - startTime;
-      if (lastResponse) {
-        this._logApiResponse(
-          durationMs,
-          userPromptId,
-          lastUsageMetadata,
-          JSON.stringify(responses),
-        );
-      }
+      this._logApiResponse(
+        durationMs,
+        userPromptId,
+        lastUsageMetadata,
+        JSON.stringify(responses),
+      );
     } catch (error) {
       const durationMs = Date.now() - startTime;
       this._logApiError(durationMs, error, userPromptId);
