@@ -11,6 +11,7 @@ import {
 import { themeManager, DEFAULT_THEME } from '../ui/themes/theme-manager.js';
 import { pickDefaultThemeName } from '../ui/themes/theme.js';
 import { getThemeTypeFromBackgroundColor } from '../ui/themes/color-utils.js';
+import { getOSColorScheme } from '../ui/utils/osColorScheme.js';
 import type { LoadedSettings } from '../config/settings.js';
 import { type Config, coreEvents, debugLogger } from '@google/gemini-cli-core';
 
@@ -43,13 +44,25 @@ export async function setupTerminalAndTheme(
       );
     }
   } else {
-    // If no theme is set, check terminal background color
-    const themeName = pickDefaultThemeName(
-      terminalBackground,
-      themeManager.getAllThemes(),
-      DEFAULT_THEME.name,
-      'Default Light',
-    );
+    let themeName: string;
+    if (terminalBackground !== undefined) {
+      themeName = pickDefaultThemeName(
+        terminalBackground,
+        themeManager.getAllThemes(),
+        DEFAULT_THEME.name,
+        'Default Light',
+      );
+    } else {
+      const osScheme = await getOSColorScheme();
+      if (osScheme === 'light') {
+        themeName = 'Default Light';
+      } else {
+        themeName = DEFAULT_THEME.name;
+      }
+      if (osScheme) {
+        debugLogger.log(`Detected OS color scheme: ${osScheme}`);
+      }
+    }
     themeManager.setActiveTheme(themeName);
   }
 

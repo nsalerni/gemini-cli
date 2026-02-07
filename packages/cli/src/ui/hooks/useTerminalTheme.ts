@@ -18,6 +18,10 @@ import type { Config } from '@google/gemini-cli-core';
 import { useTerminalContext } from '../contexts/TerminalContext.js';
 import { SettingScope } from '../../config/settings.js';
 import type { UIActions } from '../contexts/UIActionsContext.js';
+import {
+  getOSColorScheme,
+  shouldSwitchThemeForOSScheme,
+} from '../utils/osColorScheme.js';
 
 export function useTerminalTheme(
   handleThemeSelect: UIActions['handleThemeSelect'],
@@ -32,38 +36,72 @@ export function useTerminalTheme(
       return;
     }
 
-    // Only poll for changes to the terminal background if a terminal background was detected at startup.
-    if (config.getTerminalBackground() === undefined) {
-      return;
+    const hasTerminalBackground = config.getTerminalBackground() !== undefined;
+
+    if (hasTerminalBackground) {
+      const pollIntervalId = setInterval(() => {
+        const currentThemeName = settings.merged.ui.theme;
+        if (!themeManager.isDefaultTheme(currentThemeName)) {
+          return;
+        }
+
+        stdout.write('\x1b]11;?\x1b\\');
+      }, settings.merged.ui.terminalBackgroundPollingInterval * 1000);
+
+      const handleTerminalBackground = (colorStr: string) => {
+        const match =
+          /^rgb:([0-9a-fA-F]{1,4})\/([0-9a-fA-F]{1,4})\/([0-9a-fA-F]{1,4})$/.exec(
+            colorStr,
+          );
+        if (!match) return;
+
+        const hexColor = parseColor(match[1], match[2], match[3]);
+        const luminance = getLuminance(hexColor);
+        config.setTerminalBackground(hexColor);
+
+        const currentThemeName = settings.merged.ui.theme;
+
+        const newTheme = shouldSwitchTheme(
+          currentThemeName,
+          luminance,
+          DEFAULT_THEME.name,
+          DefaultLight.name,
+        );
+
+        if (newTheme) {
+          handleThemeSelect(newTheme, SettingScope.User);
+        }
+      };
+
+      subscribe(handleTerminalBackground);
+
+      return () => {
+        clearInterval(pollIntervalId);
+        unsubscribe(handleTerminalBackground);
+      };
     }
 
-    const pollIntervalId = setInterval(() => {
-      // Only poll if we are using one of the default themes
+    const intervalSeconds = Math.max(
+      settings.merged.ui.terminalBackgroundPollingInterval,
+      5,
+    );
+    let lastScheme: string | undefined;
+
+    const pollOSScheme = async () => {
       const currentThemeName = settings.merged.ui.theme;
       if (!themeManager.isDefaultTheme(currentThemeName)) {
         return;
       }
 
-      stdout.write('\x1b]11;?\x1b\\');
-    }, settings.merged.ui.terminalBackgroundPollingInterval * 1000);
+      const scheme = await getOSColorScheme();
+      if (!scheme || scheme === lastScheme) {
+        return;
+      }
+      lastScheme = scheme;
 
-    const handleTerminalBackground = (colorStr: string) => {
-      // Parse the response "rgb:rrrr/gggg/bbbb"
-      const match =
-        /^rgb:([0-9a-fA-F]{1,4})\/([0-9a-fA-F]{1,4})\/([0-9a-fA-F]{1,4})$/.exec(
-          colorStr,
-        );
-      if (!match) return;
-
-      const hexColor = parseColor(match[1], match[2], match[3]);
-      const luminance = getLuminance(hexColor);
-      config.setTerminalBackground(hexColor);
-
-      const currentThemeName = settings.merged.ui.theme;
-
-      const newTheme = shouldSwitchTheme(
+      const newTheme = shouldSwitchThemeForOSScheme(
         currentThemeName,
-        luminance,
+        scheme,
         DEFAULT_THEME.name,
         DefaultLight.name,
       );
@@ -73,11 +111,10 @@ export function useTerminalTheme(
       }
     };
 
-    subscribe(handleTerminalBackground);
+    const osIntervalId = setInterval(pollOSScheme, intervalSeconds * 1000);
 
     return () => {
-      clearInterval(pollIntervalId);
-      unsubscribe(handleTerminalBackground);
+      clearInterval(osIntervalId);
     };
   }, [
     settings.merged.ui.theme,

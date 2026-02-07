@@ -9,6 +9,7 @@ import { useTerminalTheme } from './useTerminalTheme.js';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { makeFakeConfig, type Config } from '@google/gemini-cli-core';
 import os from 'node:os';
+import type { OSColorScheme } from '../utils/osColorScheme.js';
 
 // Mocks
 const mockWrite = vi.fn();
@@ -61,6 +62,28 @@ vi.mock('../themes/default-light.js', () => ({
   DefaultLight: { name: 'default-light' },
 }));
 
+const mockGetOSColorScheme = vi.fn<() => Promise<OSColorScheme | undefined>>();
+vi.mock('../utils/osColorScheme.js', () => ({
+  getOSColorScheme: () => mockGetOSColorScheme(),
+  shouldSwitchThemeForOSScheme: (
+    currentThemeName: string | undefined,
+    scheme: OSColorScheme,
+    defaultDarkName: string,
+    defaultLightName: string,
+  ) => {
+    if (
+      scheme === 'light' &&
+      (currentThemeName === defaultDarkName || currentThemeName === undefined)
+    ) {
+      return defaultLightName;
+    }
+    if (scheme === 'dark' && currentThemeName === defaultLightName) {
+      return defaultDarkName;
+    }
+    return undefined;
+  },
+}));
+
 describe('useTerminalTheme', () => {
   let config: Config;
 
@@ -78,6 +101,7 @@ describe('useTerminalTheme', () => {
     mockSubscribe.mockClear();
     mockUnsubscribe.mockClear();
     mockHandleThemeSelect.mockClear();
+    mockGetOSColorScheme.mockClear();
     // Reset any settings modifications
     mockSettings.merged.ui.autoThemeSwitching = true;
     mockSettings.merged.ui.theme = 'default';
@@ -163,5 +187,70 @@ describe('useTerminalTheme', () => {
     expect(mockWrite).not.toHaveBeenCalled();
 
     mockSettings.merged.ui.autoThemeSwitching = true;
+  });
+
+  describe('OS color scheme fallback', () => {
+    beforeEach(() => {
+      config.getTerminalBackground = vi.fn().mockReturnValue(undefined);
+    });
+
+    it('should poll OS color scheme when terminal background is unavailable', async () => {
+      mockGetOSColorScheme.mockResolvedValue('light');
+      renderHook(() => useTerminalTheme(mockHandleThemeSelect, config));
+
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(mockGetOSColorScheme).toHaveBeenCalled();
+    });
+
+    it('should switch to light theme when OS scheme is light', async () => {
+      mockGetOSColorScheme.mockResolvedValue('light');
+      renderHook(() => useTerminalTheme(mockHandleThemeSelect, config));
+
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(mockHandleThemeSelect).toHaveBeenCalledWith(
+        'default-light',
+        expect.anything(),
+      );
+    });
+
+    it('should switch to dark theme when OS scheme is dark and current is light', async () => {
+      mockSettings.merged.ui.theme = 'default-light';
+      mockGetOSColorScheme.mockResolvedValue('dark');
+      renderHook(() => useTerminalTheme(mockHandleThemeSelect, config));
+
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(mockHandleThemeSelect).toHaveBeenCalledWith(
+        'default',
+        expect.anything(),
+      );
+    });
+
+    it('should not switch when OS scheme matches current theme', async () => {
+      mockGetOSColorScheme.mockResolvedValue('dark');
+      renderHook(() => useTerminalTheme(mockHandleThemeSelect, config));
+
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(mockHandleThemeSelect).not.toHaveBeenCalled();
+    });
+
+    it('should not switch when OS scheme is undefined', async () => {
+      mockGetOSColorScheme.mockResolvedValue(undefined);
+      renderHook(() => useTerminalTheme(mockHandleThemeSelect, config));
+
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(mockHandleThemeSelect).not.toHaveBeenCalled();
+    });
+
+    it('should enforce minimum polling interval of 5 seconds', async () => {
+      mockSettings.merged.ui.terminalBackgroundPollingInterval = 1;
+      mockGetOSColorScheme.mockResolvedValue('light');
+      renderHook(() => useTerminalTheme(mockHandleThemeSelect, config));
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(mockGetOSColorScheme).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(mockGetOSColorScheme).toHaveBeenCalled();
+    });
   });
 });
